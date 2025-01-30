@@ -1,0 +1,34 @@
+What is API?
+
+->Application Programming Interface
+->API are Everywhere
+->Contract provided by one piece of software to another
+->Structure request and response
+
+What is Rest?
+
+->Representational State Transfer
+->Architecture style for designing networked Application
+->Relies on a stateless, client-server Protocol, almost always HTTP
+->Treats server onbjects as resources that can be created or destroyed
+->can be used by virtual any programming language
+
+HTTP METHODS
+
+->GET: Retrieve data from a specifed resource
+->POST: Submit data to be processed to a specified resource
+->PUT: update a specified resource
+->DELETE: delete a specified resource
+->HEAD, OPTIONS, PATCH
+
+
+End points 
+The URI/URL where api/service can be accessed by a client application
+
+example
+
+GET  https://mysite.com/api/users
+GET  https://mysite.com/api/users/1
+POST  https://mysite.com/api/users
+PUT  https://mysite.com/api/users/1
+DELETE  https://mysite.com/api/users/1
