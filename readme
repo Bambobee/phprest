@@ -38,6 +38,8 @@ https://jwt.io/introduction
 https://github.com/firebase/php-jwt
 https://jwt.io/ for testing your key
 
+composer require firebase/php-jwt
+
 JWT -> Json Web Tokens 
 It is aa open standard (RCF 7519) that defines a compact and self-contained way of security transimitting information btn parties as JSON objects 
 
@@ -52,3 +54,7 @@ It consists of 3 parts all seperated by dots
 ->Header
 ->Payload
 ->Signature
+
+api token 
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3Mzg0ODM2ODYsImlzcyI6ImxvY2FsaG9zdCIsImV4cCI6MTczODQ4Mzc0NiwidXNlcklkIjoxfQ.NMgwzG_WVnexeYr95xu3EIGU_YXcpe775wPT9b4uPyI
