@@ -32,3 +32,22 @@ GET  https://mysite.com/api/users/1
 POST  https://mysite.com/api/users
 PUT  https://mysite.com/api/users/1
 DELETE  https://mysite.com/api/users/1
+
+
+https://jwt.io/introduction
+https://github.com/firebase/php-jwt
+
+JWT -> Json Web Tokens 
+It is aa open standard (RCF 7519) that defines a compact and self-contained way of security transimitting information btn parties as JSON objects 
+
+Why should we use JSON web tokens 
+->Authentication -> This is the most common scenario for using JWT. Once the user is logged in, each subsequence request will include the JWT 
+
+->Informartion Exchange -> JWT are the gud ways of security transimitting inforntion btn parties.
+
+WHat is JWT structure?
+
+It consists of 3 parts all seperated by dots
+->Header
+->Payload
+->Signature
