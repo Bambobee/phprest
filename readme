@@ -36,6 +36,7 @@ DELETE  https://mysite.com/api/users/1
 
 https://jwt.io/introduction
 https://github.com/firebase/php-jwt
+https://jwt.io/ for testing your key
 
 JWT -> Json Web Tokens 
 It is aa open standard (RCF 7519) that defines a compact and self-contained way of security transimitting information btn parties as JSON objects 

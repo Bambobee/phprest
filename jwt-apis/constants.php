@@ -4,7 +4,7 @@
 define('SECRETE_KEY', 'test123');
 
 /*DATA TYPE*/
-define('BOLEAN', '1');
+define('BOOLEAN', '1');
 define('INTEGER', '2');
 define('STRING', '3');
 
@@ -18,6 +18,7 @@ define('API_NAME_REQUIRED',             105);
 define('API_PARAM_REQUIRED',            106);
 define('API_DOESNT_NOT_EXIST',          107);
 define('INVALID_USER_PASS',             108);
+define('USER_NOT_ACTIVE',               109);
 
 
 define('SUCCESS_RESPONSE',              200);

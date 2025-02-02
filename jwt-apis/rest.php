@@ -37,20 +37,58 @@ class Rest{
     }
 
     public function processApi(){
-
+        $api = new API;
+        $rMethod = new reflectionMethod('API', $this->serviceName);
+        if(!method_exists($api, $this->serviceName)){
+            $this->throwError(API_DOESNT_NOT_EXIST, 'API does not exist.');
+        }
+        $rMethod->invoke($api);
     }
 
-    public function validateParameter($fieldName, $value, $dataType, $required){
+    public function validateParameter($fieldName, $value, $dataType, $required = true){
+        if($required == true && empty($value) == true){
+            $this->throwError(VALIDATE_PARAMETER_REQUIRED, $fieldName . " parameter is required");
+        }
 
+        switch($dataType){
+            case BOOLEAN : 
+                if(!is_bool($value)){
+                    $this->throwError(VALIDATE_PARAMETER_DATATYPE, 'Datatype is not valid for this ' . $fieldName . 
+                    " It should be a boolean");
+                }
+                break;
+            case INTEGER : 
+                if(!is_numeric($value)){
+                    $this->throwError(VALIDATE_PARAMETER_DATATYPE, 'Datatype is not valid for this ' . $fieldName . 
+                    " It should be nnumeric.");
+                }
+                break;   
+            case STRING : 
+                if(!is_string($value)){
+                    $this->throwError(VALIDATE_PARAMETER_DATATYPE, 'Datatype is not valid for this ' . $fieldName . 
+                    " It should be a string.");
+                }
+                break;  
+            default:
+                    $this->throwError(VALIDATE_PARAMETER_DATATYPE, 'Datatype is not valid for this ' . $fieldName);
+                break;
+        }
+
+        return $value;
     }
+
+
     public function throwError($code, $message){
         header("content-type: application/json");
         $errorMsg = json_encode(['error' => ['status'=>$code, 'message'=>$message]]);
         echo $errorMsg;
         exit;
     }
-    public function returnResponse(){
-
+    public function returnResponse($code, $data){
+        header("content-type: application/json");
+        $response = json_encode(['response' => ['status' => $code, "result" => $data]]);
+        echo $response;
+        exit;
     }
 }
 ?>
