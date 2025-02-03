@@ -51,6 +51,12 @@ class Customer{
     function getUpdatedBy(){
         return $this->updatedBy;
     }
+    function setUpdatedOn($updatedOn){
+        $this->updatedOn = $updatedOn;
+    }
+    function getUpdatedOn(){
+        return $this->updatedOn;
+    }
     function setCreatedBy($createdBy){
         $this->createdBy = $createdBy;
     }
@@ -76,6 +82,23 @@ class Customer{
         return $customers;
     }
 
+    public function getCustomerDetailsById(){
+
+        $sql = "SELECT c. *,
+                       u.name AS created_user,
+                       u1.name AS updated_user
+                    FROM customers c
+                      JOIN users u ON (c.created_by = u.id)
+                      LEFT JOIN users u1 ON (c.updated_by = u1.id)
+                      WHERE C.id = :customerId";
+
+                  $stmt = $this->dbConn->prepare($sql);
+                  $stmt->bindParam(':customerId', $this->id);
+                  $stmt->execute();
+                  $customers = $stmt->FETCH(PDO::FETCH_ASSOC);
+                  return $customers;    
+    }
+
     public function insert(){
         $sql = 'INSERT INTO ' . $this->tableName . '(id, name, email, address, mobile, created_by, created_on) VALUE (null, :name, :email,
          :address, :mobile, :createdBy, :createdOn)';
@@ -97,29 +120,74 @@ class Customer{
         //  return $this->id;
     }
 
-    public function update(){
+    // public function update(){
 
-        $sql = 'UPDATE $this->tableName SET ';
-        if(NULL != $this->getName()){
-            $sql .= "name = '" . $this->getName() . "',";
-        }
-        if(NULL != $this->getEmail()){
-            $sql .= "email = '" . $this->getEmail() . "',";
-        }
-        if(NULL != $this->getAddress()){
-            $sql .= "address = '" . $this->getAddress() . "',";
-        }
-        if(NULL != $this->getMobile()){
-            $sql .= "mobile = '" . $this->getMobile() . "',";
-        }
+    //     $sql = 'UPDATE $this->tableName SET ';
+    //     if(NULL != $this->getName()){
+    //         $sql .= "name = '" . $this->getName() . "',";
+    //     }
+    //     if(NULL != $this->getEmail()){
+    //         $sql .= "email = '" . $this->getEmail() . "',";
+    //     }
+    //     if(NULL != $this->getAddress()){
+    //         $sql .= "address = '" . $this->getAddress() . "',";
+    //     }
+    //     if(NULL != $this->getMobile()){
+    //         $sql .= "mobile = '" . $this->getMobile() . "',";
+    //     }
 
-        $sql .= "update_by = :updatedBy,update_on = :updatedOn WHERE id = :userId";
+    //     $sql .= "update_by = :updatedBy, updated_on = :updatedOn WHERE id = :userId";
       
+    //     $stmt = $this->dbConn->prepare($sql);
+    //     $stmt->bindParam(':userId', $this->id);
+    //     $stmt->bindParam(':updatedBy', $this->updatedBy);
+    //     $stmt->bindParam(':updatedOn', $this->updatedOn);
+
+    //     if($stmt->execute()){
+    //         return true;
+    //     }
+    //     else{
+    //         return false;
+    //     }
+    // }
+
+    public function update() {
+        $sql = "UPDATE {$this->tableName} SET ";
+        $params = [];
+    
+        if (NULL !== $this->getName()) {
+            $sql .= "name = :name, ";
+            $params[':name'] = $this->getName();
+        }
+        if (NULL !== $this->getEmail()) {
+            $sql .= "email = :email, ";
+            $params[':email'] = $this->getEmail();
+        }
+        if (NULL !== $this->getAddress()) {
+            $sql .= "address = :address, ";
+            $params[':address'] = $this->getAddress();
+        }
+        if (NULL !== $this->getMobile()) {
+            $sql .= "mobile = :mobile, ";
+            $params[':mobile'] = $this->getMobile();
+        }
+    
+        // Add last fields
+        $sql .= "updated_by = :updatedBy, updated_on = :updatedOn WHERE id = :userId";
+    
+        // Prepare statement
         $stmt = $this->dbConn->prepare($sql);
-        $stmt->bindParam(':userId', $this->id);
+        
+        // Bind values dynamically
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        
+        // Bind required values
         $stmt->bindParam(':updatedBy', $this->updatedBy);
         $stmt->bindParam(':updatedOn', $this->updatedOn);
-
+        $stmt->bindParam(':userId', $this->id);
+    
         if($stmt->execute()){
             return true;
         }
@@ -127,6 +195,7 @@ class Customer{
             return false;
         }
     }
+    
 
     public function delete(){
         $stmt = $this->dbConn->prepare('DELETE FROM ' . $this->tableName . ' WHERE id = :userId');

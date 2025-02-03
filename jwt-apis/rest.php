@@ -1,10 +1,16 @@
 <?php
+require __DIR__ . '/vendor/autoload.php'; // Include Composer's autoloader
+use Firebase\JWT\JWT; // Import the JWT class
+use Firebase\JWT\Key;
+
 require_once('constants.php');
 class Rest{
 
     protected $request;
     protected $serviceName;
     protected $param;
+    protected $dbConn;
+    protected $userId;
 
     public function __construct(){
         if($_SERVER['REQUEST_METHOD'] !== 'POST'){
@@ -13,6 +19,13 @@ class Rest{
         $handler = fopen('php://input', 'r');
         $this->request = stream_get_contents($handler);
         $this->validateRequest();
+
+        $db = new DbConnect;
+        $this->dbConn = $db->connect();
+
+        if('generatetoken' != strtolower($this->serviceName)){
+            $this->validateToken();
+        }
     }
 
     public function validateRequest(){
@@ -121,5 +134,36 @@ class Rest{
         }
         $this->throwError(ATHORIZATION_HEADER_NOT_FOUND, 'Access Token not found');
     }
-}
+
+    public function validateToken(){
+        try{
+            //    echo $token = $this->getBearerToken();
+               $token = $this->getBearerToken();
+               $payload = JWT::decode($token, new Key(SECRETE_KEY, 'HS256'));
+              
+               $stmt = $this->dbConn->prepare("SELECT * FROM users WHERE id = :userId");
+               // Bind the email parameter
+               $stmt->bindParam(":userId", $payload->userId);
+               // Execute the query
+               $stmt->execute();
+               // Fetch data in an associative array
+               $user = $stmt->fetch(PDO::FETCH_ASSOC);
+               // Check if the user exists
+               if (!is_array($user)) {
+                   $this->returnResponse(INVALID_USER_PASS, "This user is not found in your database.");
+               }
+                // Check if the user is active
+            if ($user['active'] == 0) {
+                $this->returnResponse(USER_NOT_ACTIVE, "This User may be deactivated. Please contact admin.");
+            }
+            //    print_r($payload->userId);
+    
+           $this->userId = $payload->userId;
+            }
+            catch(Exception $e){
+                $this->throwError(ACCESS_TOKEN_ERRORS, $e->getMessage());
+            }
+        }
+    }
+
 ?>

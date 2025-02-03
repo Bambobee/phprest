@@ -5,13 +5,10 @@ use Firebase\JWT\Key;
 
 class Api extends Rest {
 
-    public $dbConn;
-
     public function __construct() {
         parent::__construct();  
-        $db = new Dbconnect();
-        $this->dbConn = $db->connect(); 
     }
+
 
     public function generateToken() {
         $email = $this->validateParameter('email', $this->param['email'], STRING);
@@ -69,38 +66,16 @@ class Api extends Rest {
         //we have added false so that the code doesn't make values required it makes values optional
         $name = $this->validateParameter('name', $this->param['name'], STRING, false);
         $email = $this->validateParameter('email', $this->param['email'], STRING, false);
-        $mobile = $this->validateParameter('mobile', $this->param['mobile'], STRING, false);
+        $mobile = $this->validateParameter('mobile', $this->param['mobile'], INTEGER, false);
         $address = $this->validateParameter('address', $this->param['address'], STRING, false);
         
-
-        try{
-        //    echo $token = $this->getBearerToken();
-           $token = $this->getBearerToken();
-           $payload = JWT::decode($token, new Key(SECRETE_KEY, 'HS256'));
-          
-           $stmt = $this->dbConn->prepare("SELECT * FROM users WHERE id = :userId");
-           // Bind the email parameter
-           $stmt->bindParam(":userId", $payload->userId);
-           // Execute the query
-           $stmt->execute();
-           // Fetch data in an associative array
-           $user = $stmt->fetch(PDO::FETCH_ASSOC);
-           // Check if the user exists
-           if (!is_array($user)) {
-               $this->returnResponse(INVALID_USER_PASS, "This user is not found in your database.");
-           }
-            // Check if the user is active
-        if ($user['active'] == 0) {
-            $this->returnResponse(USER_NOT_ACTIVE, "This User may be deactivated. Please contact admin.");
-        }
-        //    print_r($payload->userId);
 
         $cust = new Customer;
         $cust->setName($name);
         $cust->setEmail($email);
         $cust->setAddress($address);
         $cust->setMobile($mobile);
-        $cust->setCreatedBy($payload->userId);
+        $cust->setCreatedBy($this->userId);
         $cust->setCreatedOn(date('Y-m-d'));
 
         if(!$cust->insert()){
@@ -109,10 +84,71 @@ class Api extends Rest {
             $message = 'Inserted successfuly';
         }
         $this->returnResponse(SUCCESS_RESPONSE, $message);
+      
+    }
+
+    public function getCustomerDetails(){
+        $customerId = $this->validateParameter('customerId', $this->param['customerId'], INTEGER);
+
+        $cust = new Customer;
+        $cust->setId($customerId);
+        $customer = $cust->getCustomerDetailsById();
+        // print_r($customer);
+
+        if(!is_array($customer)){
+            $this->returnResponse(SUCCESS_RESPONSE, ['message' => 'Customer details not found.']);
         }
-        catch(Exception $e){
-            $this->throwError(ACCESS_TOKEN_ERRORS, $e->getMessage());
+
+        $response['customerId'] = $customer['id'];
+        $response['customerName'] = $customer['name'];
+        $response['email'] = $customer['email'];
+        $response['mobile'] = $customer['mobile'];
+        $response['address'] = $customer['address'];
+        $response['createdBy'] = $customer['created_user'];
+        $response['lastUpdateBy'] = $customer['updated_user'];
+
+        $this->returnResponse(SUCCESS_RESPONSE, $response);
+    }
+
+    public function updateCustomer(){
+        //we have added false so that the code doesn't make values required it makes values optional
+        
+        $customerId = $this->validateParameter('customerId', $this->param['customerId'], INTEGER);
+        $name = $this->validateParameter('name', $this->param['name'], STRING, false);
+        $mobile = $this->validateParameter('mobile', $this->param['mobile'], INTEGER, false);
+        $address = $this->validateParameter('address', $this->param['address'], STRING, false);
+        
+
+        $cust = new Customer;
+        $cust->setId($customerId);
+        $cust->setName($name);
+        $cust->setAddress($address);
+        $cust->setMobile($mobile);
+        $cust->setUpdatedBy($this->userId);
+        $cust->setUpdatedOn(date('Y-m-d'));
+
+        if(!$cust->update()){
+            $message = 'Failed to update. ';
+        }else{
+            $message = 'Updated successfuly';
         }
+        $this->returnResponse(SUCCESS_RESPONSE, $message);
+      
+    }
+
+    public function deleteCustomer(){
+        $customerId = $this->validateParameter('customerId', $this->param['customerId'], INTEGER);
+
+        $cust = new Customer;
+        $cust->setId($customerId);
+
+        if(!$cust->delete()){
+            $message = 'Failed to Delete.';
+        }
+        else{
+            $message = 'Deleted Successfully';
+        }
+        $this->returnResponse(SUCCESS_RESPONSE, $message);
     }
 }
 ?>
