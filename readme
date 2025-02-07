@@ -56,3 +56,32 @@ It consists of 3 parts all seperated by dots
 ->Signature
 
 api token 
+
+
+project-root/
+│
+├── api/
+│   ├── index.php              # Entry point for the API
+│
+├── app/
+│   ├── controllers/           # API controllers (e.g., Api.php)
+│   │   └── Api.php
+│   ├── models/                # Database models (e.g., Customer.php, DbConnect.php)
+│   │   ├── DbConnect.php
+│   │   └── Customer.php
+│   ├── libraries/             # Core libraries (e.g., Rest.php)
+│   │   └── Rest.php
+│   ├── helpers/               # Helper functions and utilities
+│   │   └── functions.php
+│   └── constants.php          # Application constants
+│
+├── config/                    # Configuration files
+│   └── database.php           # Database configuration
+│
+├── vendor/                    # Composer dependencies (autoloaded)
+│
+└── public/                    # Publicly accessible files (e.g., assets, frontend)
+    └── index.php              # Frontend entry point (if applicable)
+
+
+     {/* <p className="break-all">Token: {token}</p> */}
