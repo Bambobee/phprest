@@ -1,17 +1,5 @@
 <?php
 
-// Enable CORS
-header("Access-Control-Allow-Origin: http://localhost:3000");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204); // No Content response
-    exit();
-}
-
 require __DIR__ . '/../libraries/Rest.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
 use Firebase\JWT\JWT;
@@ -26,85 +14,170 @@ class Api extends Rest {
     }
 
 
+    // public function generateToken() {
+    //     $email = $this->validateParameter('email', $this->param['email'], STRING);
+    //     $pass = $this->validateParameter('pass', $this->param['pass'], STRING);
+
+    //     try{
+
+    //     // Fetch the user's hashed password from the database
+    //     $stmt = $this->dbConn->prepare("SELECT * FROM users WHERE email = :email");
+
+    //     // Bind the email parameter
+    //     // $stmt->bindParam(":email", $email);
+    //     $stmt->bindParam(":email", $email, PDO::PARAM_STR);
+
+    //     // Execute the query
+    //     $stmt->execute();
+
+    //     // Fetch data in an associative array
+    //     $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    //     // Check if the user exists
+    //     if (!is_array($user)) {
+    //         $this->returnResponse(INVALID_USER_PASS, "Email or Password is incorrect.");
+    //     }
+
+    //     // Verify the password
+    //     if (!password_verify($pass, $user['password'])) {
+    //         $this->returnResponse(INVALID_USER_PASS, "Email or Password is incorrect.");
+    //     }
+
+    //     // Check if the user is active
+    //     if ($user['active'] == 0) {
+    //         $this->returnResponse(USER_NOT_ACTIVE, "User is not activated. Please contact admin.");
+    //     }
+
+    //     // Prepare the payload for the JWT token
+    //     $payload = [
+    //         'iat' => time(),
+    //         'iss' => 'localhost',
+    //         'exp' => time() + (60 * 60), // Token expires in 1minute
+    //         'userId' => $user['id']
+    //     ];
+
+    //     // Generate JWT Token
+    //     $token = JWT::encode($payload, SECRETE_KEY, 'HS256');
+
+    //     // Return the token in the response
+    //     $data = ['token' => $token];
+    //     $this->returnResponse(SUCCESS_RESPONSE, $data);
+    // }catch(Exception $e){
+    //     $this->throwError(JWT_PROCESSING_ERROR, $e->getMessage());
+    // }
+    // }
+
     public function generateToken() {
         $email = $this->validateParameter('email', $this->param['email'], STRING);
         $pass = $this->validateParameter('pass', $this->param['pass'], STRING);
-
-        try{
-
-        // Fetch the user's hashed password from the database
-        $stmt = $this->dbConn->prepare("SELECT * FROM users WHERE email = :email");
-
-        // Bind the email parameter
-        // $stmt->bindParam(":email", $email);
-        $stmt->bindParam(":email", $email, PDO::PARAM_STR);
-
-        // Execute the query
-        $stmt->execute();
-
-        // Fetch data in an associative array
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Check if the user exists
-        if (!is_array($user)) {
-            $this->returnResponse(INVALID_USER_PASS, "Email or Password is incorrect.");
+    
+        try {
+            // Fetch the user's hashed password from the database
+            $stmt = $this->dbConn->prepare("SELECT * FROM users WHERE email = :email");
+    
+            // Use bindValue instead of bindParam
+            $stmt->bindValue(":email", $email, PDO::PARAM_STR);
+    
+            // Execute the query
+            $stmt->execute();
+    
+            // Fetch data in an associative array
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            // Check if the user exists
+            if (!is_array($user)) {
+                $this->returnResponse(INVALID_USER_PASS, "Email or Password is incorrect.");
+            }
+    
+            // Verify the password
+            if (!password_verify($pass, $user['password'])) {
+                $this->returnResponse(INVALID_USER_PASS, "Email or Password is incorrect.");
+            }
+    
+            // Check if the user is active
+            if ($user['active'] == 0) {
+                $this->returnResponse(USER_NOT_ACTIVE, "User is not activated. Please contact admin.");
+            }
+    
+            // Generate Access Token
+            $accessTokenPayload = [
+                'iat' => time(),
+                'iss' => 'localhost',
+                'exp' => time() + (60 * 60), // 1 hour
+                'userId' => $user['id']
+            ];
+            $accessToken = JWT::encode($accessTokenPayload, SECRETE_KEY, 'HS256');
+    
+            // Generate Refresh Token
+            $refreshTokenPayload = [
+                'iat' => time(),
+                'iss' => 'localhost',
+                'exp' => time() + (60 * 60 * 24 * 7), // 1 week
+                'userId' => $user['id']
+            ];
+            $refreshToken = JWT::encode($refreshTokenPayload, SECRETE_KEY, 'HS256');
+    
+            // Store Refresh Token in Database
+            $stmt = $this->dbConn->prepare("INSERT INTO refresh_token (user_id, token, expires) VALUES (:user_id, :token, :expires)");
+            $stmt->bindValue(":user_id", $user['id'], PDO::PARAM_INT);
+            $stmt->bindValue(":token", $refreshToken, PDO::PARAM_STR);
+            $stmt->bindValue(":expires", date('Y-m-d H:i:s', $refreshTokenPayload['exp']), PDO::PARAM_STR);
+            $stmt->execute();
+    
+            // Return Tokens
+            $data = [
+                'access_token' => $accessToken,
+                'refresh_token' => $refreshToken
+            ];
+            $this->returnResponse(SUCCESS_RESPONSE, $data);
+        } catch (Exception $e) {
+            $this->throwError(JWT_PROCESSING_ERROR, $e->getMessage());
         }
-
-        // Verify the password
-        if (!password_verify($pass, $user['password'])) {
-            $this->returnResponse(INVALID_USER_PASS, "Email or Password is incorrect.");
-        }
-
-        // Check if the user is active
-        if ($user['active'] == 0) {
-            $this->returnResponse(USER_NOT_ACTIVE, "User is not activated. Please contact admin.");
-        }
-
-        // Prepare the payload for the JWT token
-        $payload = [
-            'iat' => time(),
-            'iss' => 'localhost',
-            'exp' => time() + (60 * 60), // Token expires in 1minute
-            'userId' => $user['id']
-        ];
-
-        // Generate JWT Token
-        $token = JWT::encode($payload, SECRETE_KEY, 'HS256');
-
-        // Return the token in the response
-        $data = ['token' => $token];
-        $this->returnResponse(SUCCESS_RESPONSE, $data);
-    }catch(Exception $e){
-        $this->throwError(JWT_PROCESSING_ERROR, $e->getMessage());
     }
+
+    public function refreshToken() {
+        $refreshToken = $this->validateParameter('refresh_token', $this->param['refresh_token'], STRING);
+    
+        try {
+            // Decode the refresh token
+            $decoded = JWT::decode($refreshToken, new Key(SECRETE_KEY, 'HS256'));
+    
+            // Check if the refresh token is expired
+            if ($decoded->exp < time()) {
+                $this->throwError(REFRESH_TOKEN_EXPIRED, "Refresh token has expired.");
+            }
+    
+            // Fetch the refresh token from the database
+            $stmt = $this->dbConn->prepare("SELECT * FROM refresh_token WHERE token = :token AND user_id = :user_id");
+            $stmt->bindParam(":token", $refreshToken);
+            $stmt->bindParam(":user_id", $decoded->userId);
+            $stmt->execute();
+            $storedToken = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!is_array($storedToken)) {
+                $this->throwError(INVALID_REFRESH_TOKEN, "Invalid refresh token.");
+            }
+    
+            // Generate a new access token
+            $accessTokenPayload = [
+                'iat' => time(),
+                'iss' => 'localhost',
+                'exp' => time() + (60 * 60), // 1 hour
+                'userId' => $decoded->userId
+            ];
+            $accessToken = JWT::encode($accessTokenPayload, SECRETE_KEY, 'HS256');
+    
+            // Return the new access token
+            $data = ['access_token' => $accessToken];
+            $this->returnResponse(SUCCESS_RESPONSE, $data);
+        } catch (Exception $e) {
+            $this->throwError(JWT_PROCESSING_ERROR, $e->getMessage());
+        }
     }
 
-  
-    // public function validateToken(){
-    //     try{
-
-    //         $headers = apache_request_headers();
-    //         if(isset(headers["Authorization"])){
-
-    //             $token = str_ireplace(search:"bearer ",  replace:"", $headers["Authorization"]);
-
-    //             echo (new Functions)->validateToken($token);
-
-    //         }
-
-    //     }catch(Exception $e){
-    //         $this->throwError(JWT_PROCESSING_ERROR, $e->getMessage());
-    //         exit;
-    //     }
-    // }
-
-    // public function refreshToken(){
-
-    // }
-
-    // private function timeInFuture($expires): bool{
-    //     return strtotime($expires) >= time();
-    // }
+    private function timeInFuture($expires): bool {
+        return strtotime($expires) >= time();
+    }
 
     public function addCustomer(){
         //we have added false so that the code doesn't make values required it makes values optional
