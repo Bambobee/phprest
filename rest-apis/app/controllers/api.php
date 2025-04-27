@@ -103,7 +103,8 @@ class Api extends Rest {
             $accessTokenPayload = [
                 'iat' => time(),
                 'iss' => 'localhost',
-                'exp' => time() + (60 * 60), // 1 hour
+                // 'exp' => time() + (60 * 60), // 1 hour
+                'exp' => time() + (60 ), // 1 hour
                 'userId' => $user['id']
             ];
             $accessToken = JWT::encode($accessTokenPayload, SECRETE_KEY, 'HS256');
@@ -112,7 +113,8 @@ class Api extends Rest {
             $refreshTokenPayload = [
                 'iat' => time(),
                 'iss' => 'localhost',
-                'exp' => time() + (60 * 60 * 24 * 7), // 1 week
+                // 'exp' => time() + (60 * 60 * 24 * 7), // 1 week
+                'exp' => time() + (60 * 3), // 1 week
                 'userId' => $user['id']
             ];
             $refreshToken = JWT::encode($refreshTokenPayload, SECRETE_KEY, 'HS256');
@@ -162,7 +164,8 @@ class Api extends Rest {
             $accessTokenPayload = [
                 'iat' => time(),
                 'iss' => 'localhost',
-                'exp' => time() + (60 * 60), // 1 hour
+                // 'exp' => time() + (60 * 60), // 1 hour
+                'exp' => time() + (60 ), // 1 hour
                 'userId' => $decoded->userId
             ];
             $accessToken = JWT::encode($accessTokenPayload, SECRETE_KEY, 'HS256');
